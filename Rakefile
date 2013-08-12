@@ -2,7 +2,7 @@
 require 'bundler/gem_tasks'
 require File.expand_path('../lib/chosen-rails/source_file', __FILE__)
 
-desc "Update with Harvest's Chosen Library"
+desc "Update with Koenpunt's Chosen Library"
 task 'update-chosen', 'remote', 'branch' do |task, args|
   remote = args['remote'] || 'https://github.com/koenpunt/chosen'
   branch = args['branch'] || 'option_adding'
