@@ -180,7 +180,7 @@ class Chosen extends AbstractChosen
       @search_choices.find("li.search-choice").remove()
     else if not @is_multiple
       this.single_set_selected_text()
-      if @disable_search or @form_field.options.length <= @disable_search_threshold
+      if @disable_search or @form_field.options.length <= @disable_search_threshold and not @create_option
         @search_field[0].readOnly = true
         @container.addClass "chosen-container-single-nosearch"
       else
@@ -326,6 +326,10 @@ class Chosen extends AbstractChosen
     if @result_highlight
       high = @result_highlight
 
+      if high.hasClass "create-option"
+        this.select_create_option(@search_field.val())
+        return this.results_hide()
+
       this.result_clear_highlight()
 
       if @is_multiple and @max_selected_options <= this.choices_count()
@@ -400,7 +404,6 @@ class Chosen extends AbstractChosen
     if @search_field.val() is @default_text then "" else $('<div/>').text($.trim(@search_field.val())).html()
 
   winnow_results_set_highlight: ->
-
     selected_results = if not @is_multiple then @search_results.find(".result-selected.active-result") else []
     do_high = if selected_results.length then selected_results.first() else @search_results.find(".active-result").first()
 
@@ -409,9 +412,28 @@ class Chosen extends AbstractChosen
   no_results: (terms) ->
     no_results_html = $('<li class="no-results">' + @results_none_found + ' "<span></span>"</li>')
     no_results_html.find("span").first().html(terms)
-
     @search_results.append no_results_html
 
+  show_create_option: (terms) ->
+    create_option_html = $('<li class="create-option active-result"><a href="javascript:void(0);">' + @create_option_text + '</a>: "' + terms + '"</li>')
+    @search_results.append create_option_html
+
+  create_option_clear: ->
+    @search_results.find(".create-option").remove()
+
+  select_create_option: (terms) ->
+    if $.isFunction(@create_option)
+      @create_option.call this, terms
+    else
+      this.select_append_option( {value: terms, text: terms} )
+
+  select_append_option: ( options ) ->
+    option = $('<option />', options ).attr('selected', 'selected')
+    @form_field_jq.append option
+    @form_field_jq.trigger "chosen:updated"
+    @form_field_jq.trigger "change"
+    @search_field.trigger "focus"
+  
   no_results_clear: ->
     @search_results.find(".no-results").remove()
 
@@ -419,6 +441,8 @@ class Chosen extends AbstractChosen
     if @results_showing and @result_highlight
       next_sib = @result_highlight.nextAll("li.active-result").first()
       this.result_do_highlight next_sib if next_sib
+    else if @results_showing and @create_option
+      this.result_do_highlight(@search_results.find('.create-option'))
     else
       this.results_show()
 
